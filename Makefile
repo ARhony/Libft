@@ -1,32 +1,58 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: aramon <marvin@42.fr>                      +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2016/11/06 17:13:10 by aramon            #+#    #+#              #
-#    Updated: 2016/11/24 04:19:36 by aramon           ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
+CC = gcc
+CFLAGS = -Wall -Wextra -Werror
 
-NAME = libft.a
-FLAGS =	-Wall -Werror -Wextra
-SRC = ft_putchar.c ft_putstr.c ft_strlen.c ft_strcpy.c ft_isalpha.c ft_isdigit.c ft_isalnum.c ft_isascii.c ft_isprint.c ft_toupper.c ft_tolower.c ft_strdup.c ft_strncpy.c ft_strcat.c ft_strncat.c ft_strlcat.c ft_strchr.c ft_strrchr.c ft_strstr.c ft_putnbr.c ft_strnstr.c ft_atoi.c ft_strcmp.c ft_strncmp.c ft_memset.c ft_bzero.c ft_memcpy.c ft_memccpy.c ft_memmove.c ft_memchr.c ft_memcmp.c ft_memalloc.c ft_memdel.c ft_strnew.c ft_strdel.c ft_strclr.c ft_striter.c ft_striteri.c ft_strmap.c ft_strmapi.c ft_strequ.c ft_strnequ.c ft_strsub.c ft_strjoin.c ft_putendl.c ft_putchar_fd.c ft_putstr_fd.c ft_putendl_fd.c ft_putnbr_fd.c ft_strtrim.c ft_strsplit.c ft_itoa.c ft_lstnew.c ft_lstdelone.c ft_lstdel.c ft_lstadd.c ft_lstiter.c ft_lstmap.c ft_isupper.c ft_islower.c ft_lastword.c ft_wordcount.c ft_isspace.c
+SRC_DIR = src
+OBJ_DIR = obj
+BIN_DIR = bin
 
-OBJ = $(SRC:.c=.o)
+SRCS = $(wildcard $(SRC_DIR)/*.c)
+OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 
-all:	$(NAME)
+RM = rm -f
+FLAGS = -Wall -Wextra -Werror -O3
 
-$(NAME):
-	gcc $(FLAGS) -c $(SRC)
-	ar rc $(NAME) $(OBJ)
-	ranlib $(NAME)
+NORM = norminette
+
+TOTAL_FILES = $(words $(SRCS))
+PROGRESS_BAR_LENGTH = 40
+
+CURRENT_PROGRESS = 0
+
+define draw_progress_bar
+	$(eval TERMINAL_WIDTH = $(shell tput cols))
+	$(eval PROGRESS_BAR_LENGTH = $(shell echo $$(($(TERMINAL_WIDTH) - 16))))
+	@printf "\rLIBFT:["
+	@perl -e 'printf "%s", "#" x int($1 * $(PROGRESS_BAR_LENGTH) / $(TOTAL_FILES))' $(2)
+	@perl -e 'printf "%s", " " x int(($(TOTAL_FILES) - $1) * $(PROGRESS_BAR_LENGTH) / $(TOTAL_FILES))' $(2)
+	@printf "] ($(1)/$(TOTAL_FILES))"
+endef
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(OBJ_DIR)
+	@gcc -c $(FLAGS) $< -o $@
+	$(eval CURRENT_PROGRESS = $(shell echo $$(($(CURRENT_PROGRESS) + 1))))
+	@$(call draw_progress_bar,$(CURRENT_PROGRESS),$(OBJS))
+
+NAME = $(BIN_DIR)/libft.a
+
+all: $(NAME)
+
+$(NAME): $(OBJS)
+	@mkdir -p $(BIN_DIR)
+	@ar rc $@ $^
+	@printf "\nLibft Compiled\n"
 
 clean:
-	/bin/rm -f $(OBJ)
+	@$(RM) $(OBJS)
+	@rm -rf $(OBJ_DIR)
 
-fclean:	clean
-	rm -f $(NAME)
+fclean: clean
+	@$(RM) $(NAME)
+	@rm -rf $(BIN_DIR)
 
 re: fclean all
+
+norm:
+	@$(NORM)
+
+.PHONY: all clean fclean re norm
